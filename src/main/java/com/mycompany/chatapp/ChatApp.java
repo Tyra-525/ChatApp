@@ -76,6 +76,52 @@ int option = input.nextInt();
        System.out.println("\nRegistration successful! Please login.\n");
        login(input);
     }
+// Login 
+    public static void login(Scanner input) {
+    System.out.println("\n******************************");
+    System.out.println("            Login");
+    System.out.println("******************************");
+
+    if (registeredAccount == null) {
+        System.out.println("No account found. You need to register first.");
+        System.out.print("Would you like to register now? (yes/no): ");
+        String choice = input.nextLine().trim().toLowerCase();
+
+        if (choice.equals("yes") || choice.equals("y")) {
+            register(input);
+        } else {
+            System.out.println("Returning to main menu.\n");
+        }
+        return;
+    }
+
+    int attempts = 0;
+    int maxAttempts = 3;
+
+    while (attempts < maxAttempts) {
+        System.out.print("Enter your username: ");
+        String username = input.nextLine().trim();
+
+        System.out.print("Enter your password: ");
+        String password = input.nextLine();
+
+        if (registeredAccount.getUsername().equals(username)
+                && registeredAccount.getPassword().equals(password)) {
+            System.out.println("\nLogin successful! Welcome back, " + registeredAccount.getName() + ".\n");
+            return;
+        }
+
+        attempts++;
+        int remaining = maxAttempts - attempts;
+
+        if (remaining > 0) {
+            System.out.println("Incorrect username or password. You have " + remaining + " attempt(s) left.\n");
+        } else {
+            System.out.println("\nYou've tried too many times. Please try again later.");
+            System.exit(0);
+        }
+    }
+    }
 
     }
 
