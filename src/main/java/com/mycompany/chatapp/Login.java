@@ -46,5 +46,26 @@ public boolean checkUsername(String username) {
     this.username = username.trim();
     return true;
 }
+//method for password 
+
+public boolean checkPassword(String password) {
+    if (password == null || password.length() <= 8) {
+        System.out.println("Password must be more than 8 characters. Try again.\n");
+        return false;
+    }
+    if (!password.matches(".*[A-Z].*")) {
+        System.out.println("Password must contain at least one capital letter. Try again.\n");
+        return false;
+    }
+    if (!password.matches(".*\\d.*")) {
+        System.out.println("Password must contain at least one number. Try again.\n");
+        return false;
+    }
+    if (!password.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*")) {
+        System.out.println("Password must contain at least one special character. Try again.\n");
+        return false;
+    }
+    this.password = password.trim();
+    return true;
 
 }
