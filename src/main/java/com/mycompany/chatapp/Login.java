@@ -29,5 +29,22 @@ return false;
 this.name = name.trim();
 return true;
 }
+//method for username
+public boolean checkUsername(String username) {
+    if (username == null || username.trim().isEmpty()) {
+        System.out.println("Username cannot be empty. Try again.\n");
+        return false;
+    }
+    if (username.trim().length() < 4) {
+        System.out.println("Username must be at least 4 characters. Try again.\n");
+        return false;
+    }
+    if (!username.trim().contains("_")) {
+        System.out.println("Username must contain an underscore (_). Try again.\n");
+        return false;
+    }
+    this.username = username.trim();
+    return true;
+}
 
 }
