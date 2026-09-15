@@ -36,6 +36,46 @@ int option = input.nextInt();
                 System.out.println("\nInvalid option. Please try again.\n");
             }
     }
+//register
+    
+    /**
+     *
+     * @param input
+     */
+    public static void register(Scanner input){
+     System.out.println("\n********************");
+     System.out.println("Account Registration");
+     System.out.println("\n********************");
+     
+     Login obj = new Login();
+     boolean valid = false;
+     
+     while(!valid){
+      System.out.print("Please enter your name:");
+      valid = obj.name(input.nextLine());
+     }
+     valid  = false;
+     while(!valid){
+      System.out.print("Please enter your username (minimum 4 cahracters,must include an underscore):");
+      valid = obj.checkUsername(input.nextLine());
+     }
+     
+     valid  = false;
+     while(!valid){
+      System.out.print("Please enter your password (8+ chars, 1 number, 1 capital, 1 special char):");
+       valid = obj.checkPassword(input.nextLine());
+ }
+     valid  = false;
+     while(!valid){
+      System.out.print("Please enter your number (e.g. +27821234567):):");
+      valid = obj.checkCellPhoneNumber(input.nextLine());
+     }
+     
+     registeredAccount= obj;
+
+       System.out.println("\nRegistration successful! Please login.\n");
+       login(input);
+    }
 
     }
 
