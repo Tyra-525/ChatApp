@@ -29,6 +29,7 @@ return false;
 this.name = name.trim();
 return true;
 }
+
 //method for username
 public boolean checkUsername(String username) {
     if (username == null || username.trim().isEmpty()) {
@@ -68,4 +69,16 @@ public boolean checkPassword(String password) {
     this.password = password.trim();
     return true;
 
+    // method for cell phone
+public boolean checkCellPhoneNumber(String cellNumber) {
+    if (cellNumber == null || !cellNumber.trim().matches("\\+27\\d{9}")) {
+        System.out.println("Invalid SA cell number format. Use +27 and add 9 numbers. Try again.\n");
+        return false;
+    }
+    this.cellPhoneNumber = cellNumber.trim();
+    return true;
 }
+
+    
+}
+
