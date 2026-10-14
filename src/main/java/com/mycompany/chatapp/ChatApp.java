@@ -14,6 +14,8 @@ static Login registeredAccount;
     public static void main(String[] args) {
         Scanner input = new Scanner(System.in);
 boolean running = true;
+
+while (running){
 System.out.println("******************************");
 System.out.println("Welcome to ChatApp");
 System.out.println("******************************");
@@ -35,6 +37,7 @@ int option = input.nextInt();
             } else {
                 System.out.println("\nInvalid option. Please try again.\n");
             }
+    }
     }
 //register
     
@@ -148,6 +151,71 @@ int option = input.nextInt();
                 System.out.println("Goodbye!");
                 return;
             }
+        }
+    }
+    public static void sendOne(Scanner input) {
+        // ----- Recipient -----
+        String recipient = "";
+        boolean validCell = false;
+
+        while (!validCell) {
+            System.out.print("Recipient cell number (e.g. +27718693002): ");
+            recipient = input.nextLine().trim();
+
+            if (Message.isValidCell(recipient)) {
+                validCell = true;
+            } else {
+                System.out.println("Cell phone number is incorrectly formatted or does not contain an "
+                        + "international code. Please correct the number and try again.");
+            }
+        }
+        System.out.println("Cell phone number successfully captured.");
+
+        // ----- Message text -----
+        String text = "";
+        boolean validText = false;
+
+        while (!validText) {
+            System.out.print("Message (max 250 characters): ");
+            text = input.nextLine();
+
+            if (text.length() <= 250) {
+                validText = true;
+                System.out.println("Message sent");
+            } else {
+                System.out.println("Please enter a message of less than 250 characters.");
+            }
+        }
+
+        // ----- Create the message and choose what to do with it -----
+        Message message = new Message(recipient, text);
+        System.out.println(message.getMessageIDConfirmation());
+
+        System.out.println("1) Send Message");
+        System.out.println("2) Disregard Message");
+        System.out.println("3) Store Message to send later");
+        int choice = readInt(input, "Choose an option: ", 1, 3);
+
+        System.out.println(message.sentMessage(choice));
+        if (choice == 1) {
+            System.out.println(message.getDetails());
+        } else if (choice == 2) {
+            String answer = input.nextLine().trim();
+            System.out.println(answer.equals("0") ? "Message deleted." : "Message not deleted.");
+        }
+    }
+     public static int readInt(Scanner input, String prompt, int min, int max) {
+        while (true) {
+            System.out.print(prompt);
+            try {
+                int value = Integer.parseInt(input.nextLine().trim());
+                if (value >= min && value <= max) {
+                    return value;
+                }
+            } catch (NumberFormatException ignored) {
+                // fall through to the error message
+            }
+            System.out.println("Please enter a valid number.");
         }
     }
    }
