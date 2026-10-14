@@ -61,6 +61,26 @@ public class Messages {
         this.ReceipientCell = cell;
         return "Cell number successfully captured.";
     }
+ 
+ //message hash method 
+ public String createMessageHash() {
+        if (messageID == null || SentMessage == null || SentMessage.trim().isEmpty()) {
+            return "00:0:EMPTY";
+        }
+
+        String firstTwo = messageID.substring(0,2);
+        String[] words = SentMessage.trim().split("\\s+");
+        String firstWord = words[0].toUpperCase();
+        String lastWord  = words[words.length - 1].toUpperCase();
+
+        // Remove any non-letter characters from the words for a clean hash
+        firstWord = firstWord.replaceAll("[^A-Z]", "");
+        lastWord  = lastWord.replaceAll("[^A-Z]", "");
+
+        MessageHash = firstTwo + ":" + amntOfMessage + ":" + firstWord + lastWord;
+        return MessageHash;
+    }
+
 
 
     
