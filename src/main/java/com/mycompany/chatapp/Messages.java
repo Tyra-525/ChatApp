@@ -80,6 +80,56 @@ public class Messages {
         MessageHash = firstTwo + ":" + amntOfMessage + ":" + firstWord + lastWord;
         return MessageHash;
     }
+ 
+ //message being sent
+ //option to send,direagrd or store message 
+ public String SentMessage(Scanner input) {
+        System.out.println("\nPlease choose an option:");
+        System.out.println("1. Send Message");
+        System.out.println("2. Disregard Message");
+        System.out.println("3. Store Message to send later");
+        System.out.print("Enter choice: ");
+
+        String choice = input.nextLine().trim();
+
+        if (choice.equals("1")) {
+            // Successfully send
+            totalMessagesSent++;
+            amntOfMessage = totalMessagesSent;
+            createMessageHash();
+            String details = "Message ID: " + messageID
+                           + "\nMessage Hash: " + MessageHash
+                           + "\nRecipient: " + ReceipientCell
+                           + "\nMessage: " + SentMessage;
+            sentMessages.add(details);
+            return "Message successfully sent.";
+        }
+        else if (choice.equals("2") || choice.equals("0")) {
+            // Disregard – nothing is stored
+            return "Press 0 to delete the message – Message disregarded.";
+        }
+        else if (choice.equals("3")) {
+            // Store for later (you will implement the JSON part later)
+            return "Message successfully stored.";
+        }
+        else {
+            return "Invalid option. Message not sent.";
+        }
+    }
+    //print message 
+ public String printMessages() {
+        if (sentMessages.isEmpty()) {
+            return "No messages have been sent yet.";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n===== ALL SENT MESSAGES =====\n");
+        for (int i = 0; i < sentMessages.size(); i++) {
+            sb.append("\n--- Message ").append(i + 1).append(" ---\n");
+            sb.append(sentMessages.get(i)).append("\n");
+        }
+        sb.append("=============================\n");
+        return sb.toString();
+    }
 
 
 
