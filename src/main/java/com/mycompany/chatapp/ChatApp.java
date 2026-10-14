@@ -38,10 +38,7 @@ int option = input.nextInt();
     }
 //register
     
-    /**
-     *
-     * @param input
-     */
+   
     public static void register(Scanner input){
      System.out.println("\n********************");
      System.out.println("Account Registration");
@@ -107,8 +104,9 @@ int option = input.nextInt();
 
         if (registeredAccount.getUsername().equals(username)
                 && registeredAccount.getPassword().equals(password)) {
-            System.out.println("\nLogin successful! Welcome back, " + registeredAccount.getName() + ".\n");
-            return;
+           System.out.println("\nLogin successful! Welcome back to ChatAPP " + registeredAccount.getName() + ".\n");
+            menu(input);   // start the QuickChat menu
+             return;
         }
 
         attempts++;
@@ -118,10 +116,41 @@ int option = input.nextInt();
             System.out.println("Incorrect username or password. You have " + remaining + " attempt(s) left.\n");
         } else {
             System.out.println("\nYou've tried too many times. Please try again later.");
-            System.exit(0);
+           
         }
     }
     }
+   public static void menu(Scanner input) {
+        System.out.println("Welcome to QuickChat.");
+        int limit = readInt(input, "How many messages do you wish to enter? ", 1, Integer.MAX_VALUE);
+        int entered = 0;
 
+        while (true) {
+            System.out.println();
+            System.out.println("1) Send Messages");
+            System.out.println("2) Show recently sent messages");
+            System.out.println("3) Quit");
+            int option = readInt(input, "Choose an option: ", 1, 3);
+
+            if (option == 1) {
+                if (entered >= limit) {
+                    System.out.println("You have already entered all " + limit + " messages.");
+                    continue;
+                }
+                sendOne(input);
+                entered++;
+                if (entered == limit) {
+                    System.out.println("Total messages sent: " + Message.returnTotalMessages());
+                }
+            } else if (option == 2) {
+                System.out.println("Coming Soon.");
+            } else {
+                System.out.println("Goodbye!");
+                return;
+            }
+        }
     }
+   }
+   
+    
 
