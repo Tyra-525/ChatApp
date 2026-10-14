@@ -49,6 +49,19 @@ public class Messages {
         }
         return true;
     }
+    // Recvier Number
+ public String checkRecipientCell(String cell) {
+        if (cell == null || cell.trim().isEmpty()) {
+            return "Recipient cell number cannot be empty.";
+        }
+  
+        if (!cell.matches("\\+27\\d{9}")) {
+            return "Recipient cell number format is invalid.";
+        }
+        this.ReceipientCell = cell;
+        return "Cell number successfully captured.";
+    }
+
 
     
 }
