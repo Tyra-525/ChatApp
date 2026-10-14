@@ -108,8 +108,10 @@ int option = input.nextInt();
         if (registeredAccount.getUsername().equals(username)
                 && registeredAccount.getPassword().equals(password)) {
            System.out.println("\nLogin successful! Welcome back to ChatAPP " + registeredAccount.getName() + ".\n");
-            menu(input);   // start the QuickChat menu
-             return;
+            
+         runQuickChat(input);
+         
+         return;
         }
 
         attempts++;
@@ -123,102 +125,105 @@ int option = input.nextInt();
         }
     }
     }
-   public static void menu(Scanner input) {
-        System.out.println("Welcome to QuickChat.");
-        int limit = readInt(input, "How many messages do you wish to enter? ", 1, Integer.MAX_VALUE);
-        int entered = 0;
+   // ==================== NEW METHOD – QuickChat Menu ====================
+    public static void runQuickChat(Scanner input) {
 
-        while (true) {
-            System.out.println();
+        System.out.println("Welcome to QuickChat.");
+
+        // Ask how many messages the user wants to send
+        System.out.print("How many messages would you like to enter? ");
+        int maxMessages;
+        try {
+            maxMessages = Integer.parseInt(input.nextLine().trim());
+            if (maxMessages <= 0) {
+                System.out.println("You must enter at least 1 message. Returning to main menu.");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid number. Returning to main menu.");
+            return;
+        }
+
+        boolean inMenu = true;
+        int messagesEntered = 0;
+
+        while (inMenu) {
+            System.out.println("\n===== QUICKCHAT MENU =====");
             System.out.println("1) Send Messages");
             System.out.println("2) Show recently sent messages");
             System.out.println("3) Quit");
-            int option = readInt(input, "Choose an option: ", 1, 3);
+            System.out.print("Choose an option: ");
 
-            if (option == 1) {
-                if (entered >= limit) {
-                    System.out.println("You have already entered all " + limit + " messages.");
+            String choice = input.nextLine().trim();
+
+            if (choice.equals("1")) {
+                // ----- Send Messages feature -----
+                if (messagesEntered >= maxMessages) {
+                    System.out.println("You have already entered the maximum number of messages ("
+                                       + maxMessages + ").");
                     continue;
                 }
-                sendOne(input);
-                entered++;
-                if (entered == limit) {
-                    System.out.println("Total messages sent: " + Message.returnTotalMessages());
+
+                Messages msg = new Messages();
+                msg.generateMessageID();          // random 10-digit ID
+                msg.checkMessageID();             // validate it
+
+                // Recipient
+                String cellResult;
+                do {
+                    System.out.print("Enter recipient cell number (e.g. +27821234567 – max 10 chars): ");
+                    cellResult = msg.checkRecipientCell(input.nextLine());
+                    System.out.println(cellResult);
+                } while (!cellResult.equals("Cell number successfully captured."));
+
+                // Message text
+                String text;
+                do {
+                    System.out.print("Enter your message (max 250 characters): ");
+                    text = input.nextLine();
+                    if (text.length() > Messages.Max_Length) {
+                        System.out.println("Please enter a message of less than 250 characters.");
+                    }
+                } while (text.length() > Messages.Max_Length);
+
+                msg.SentMessage = text;           // store the text
+
+                // Let user decide: Send / Disregard / Store
+                String result = msg.SentMessage(input);
+                System.out.println(result);
+
+                if (result.equals("Message successfully sent.")) {
+                    messagesEntered++;
+                    // Show full details immediately (requirement 7)
+                    System.out.println("\n----- MESSAGE DETAILS -----");
+                    System.out.println("Message ID   : " + msg.getID());
+                    System.out.println("Message Hash : " + msg.getMessageHash());
+                    System.out.println("Recipient    : " + msg.getReceipientCell());
+                    System.out.println("Message      : " + msg.getMessage());
+                    System.out.println("---------------------------");
                 }
-            } else if (option == 2) {
+
+            }
+            else if (choice.equals("2")) {
+                // Coming Soon
                 System.out.println("Coming Soon.");
-            } else {
-                System.out.println("Goodbye!");
-                return;
+            }
+            else if (choice.equals("3") || choice.equalsIgnoreCase("quit")) {
+                // Show total messages before quitting
+                Messages dummy = new Messages();
+                System.out.println("\nTotal number of messages sent: "
+                                   + dummy.returnTotalMessages());
+                System.out.println(dummy.printMessages());
+                System.out.println("Thank you for using QuickChat. Goodbye!");
+                inMenu = false;
+            }
+            else {
+                System.out.println("Invalid option. Please try again.");
             }
         }
     }
-    public static void sendOne(Scanner input) {
-        // ----- Recipient -----
-        String recipient = "";
-        boolean validCell = false;
-
-        while (!validCell) {
-            System.out.print("Recipient cell number (e.g. +27718693002): ");
-            recipient = input.nextLine().trim();
-
-            if (Message.isValidCell(recipient)) {
-                validCell = true;
-            } else {
-                System.out.println("Cell phone number is incorrectly formatted or does not contain an "
-                        + "international code. Please correct the number and try again.");
-            }
-        }
-        System.out.println("Cell phone number successfully captured.");
-
-        // ----- Message text -----
-        String text = "";
-        boolean validText = false;
-
-        while (!validText) {
-            System.out.print("Message (max 250 characters): ");
-            text = input.nextLine();
-
-            if (text.length() <= 250) {
-                validText = true;
-                System.out.println("Message sent");
-            } else {
-                System.out.println("Please enter a message of less than 250 characters.");
-            }
-        }
-
-        // ----- Create the message and choose what to do with it -----
-        Message message = new Message(recipient, text);
-        System.out.println(message.getMessageIDConfirmation());
-
-        System.out.println("1) Send Message");
-        System.out.println("2) Disregard Message");
-        System.out.println("3) Store Message to send later");
-        int choice = readInt(input, "Choose an option: ", 1, 3);
-
-        System.out.println(message.sentMessage(choice));
-        if (choice == 1) {
-            System.out.println(message.getDetails());
-        } else if (choice == 2) {
-            String answer = input.nextLine().trim();
-            System.out.println(answer.equals("0") ? "Message deleted." : "Message not deleted.");
-        }
-    }
-     public static int readInt(Scanner input, String prompt, int min, int max) {
-        while (true) {
-            System.out.print(prompt);
-            try {
-                int value = Integer.parseInt(input.nextLine().trim());
-                if (value >= min && value <= max) {
-                    return value;
-                }
-            } catch (NumberFormatException ignored) {
-                // fall through to the error message
-            }
-            System.out.println("Please enter a valid number.");
-        }
-    }
-   }
+}
+   
    
     
 
