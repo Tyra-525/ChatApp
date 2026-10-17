@@ -111,7 +111,7 @@ public class ChatApp {
                                    + registeredAccount.getName() + ".\n");
 
                 // Start Part 2 – QuickChat
-                runQuickChat(input);
+                QuickChat(input);
                 return;
             }
 
@@ -126,8 +126,8 @@ public class ChatApp {
         }
     }
 
-    // ==================== QUICKCHAT MENU ====================
-    public static void runQuickChat(Scanner input) {
+    // ==================== Part 2 ====================
+    public static void QuickChat(Scanner input) {
 
         System.out.println("Welcome to QuickChat.");
 

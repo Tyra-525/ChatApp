@@ -15,8 +15,8 @@ public class Messages {
 
     public static final int Max_Length = 250;
 
-    // Every successfully sent message is stored here
-    public static List<String> sentMessages = new ArrayList<>();
+    // Stores all successfully sent messages as one long String
+    public static String allSentMessages = "";
 
     // Running total of messages that were actually sent
     public static int totalMessagesSent = 0;
@@ -42,9 +42,7 @@ public class Messages {
     public int getamntOfMessage() { return amntOfMessage; }
     public String getstoreMessage() { return storeMessage; }
 
-    // ------------------------------------------------------------------
-    // 1. checkMessageID()
-    // ------------------------------------------------------------------
+    //method for message ID
     public boolean checkMessageID() {
         if (messageID == null || messageID.length() != 10) {
             System.out.println("Message ID must be exactly 10 characters.");
@@ -52,45 +50,64 @@ public class Messages {
         }
         return true;
     }
-
-    // ------------------------------------------------------------------
-    // 2. checkRecipientCell()
-    // ------------------------------------------------------------------
-    public String checkRecipientCell(String cell) {
-        if (cell == null || cell.trim().isEmpty()) {
-            return "Recipient cell number cannot be empty.";
-        }
-        cell = cell.trim();
-
-        if (!cell.matches("\\+27\\d{9}")) {
-            return "Invalid recipient number. Use format +27 followed by 9 digits "
-                 + "(example: +27821234567).";
-        }
-
-        this.ReceipientCell = cell;
-        return "Cell number successfully captured.";
+    
+    public String checkMessageLength(String message) {
+    if (message == null) {
+        return "Message exceeds 250 characters by 0; please reduce the size.";
     }
+    if (message.length() > Max_Length) {
+        int over = message.length() - Max_Length;
+        return "Message exceeds 250 characters by " + over + "; please reduce the size.";
+    }
+    this.SentMessage = message;
+    return "Message ready to send.";
+}
 
-    // ------------------------------------------------------------------
-    // 3. createMessageHash()
-    // ------------------------------------------------------------------
+    // Method for recipient Cell
+    public String checkRecipientCell(String cell) {
+    if (cell == null || cell.trim().isEmpty()) {
+        return "Cell phone number is incorrectly formatted or does not contain an international code. Please correct the number and try again.";
+    }
+    cell = cell.trim();
+    if (!cell.matches("\\+27\\d{9}")) {
+        return "Cell phone number is incorrectly formatted or does not contain an international code. Please correct the number and try again.";
+    }
+    this.ReceipientCell = cell;
+    return "Cell phone number successfully captured.";
+}
+
+    //method for message hash (NO ARRAYS)
     public String createMessageHash() {
         if (messageID == null || SentMessage == null || SentMessage.trim().isEmpty()) {
             return "00:0:EMPTY";
         }
 
         String firstTwo = messageID.substring(0, 2);
-        String[] words = SentMessage.trim().split("\\s+");
-        String firstWord = words[0].toUpperCase().replaceAll("[^A-Z]", "");
-        String lastWord  = words[words.length - 1].toUpperCase().replaceAll("[^A-Z]", "");
+        String message = SentMessage.trim();
+
+        // Get the first word
+        String firstWord;
+        int firstSpace = message.indexOf(" ");
+        if (firstSpace == -1) {
+            firstWord = message.toUpperCase().replaceAll("[^A-Z]", "");
+        } else {
+            firstWord = message.substring(0, firstSpace).toUpperCase().replaceAll("[^A-Z]", "");
+        }
+
+        // Get the last word
+        String lastWord;
+        int lastSpace = message.lastIndexOf(" ");
+        if (lastSpace == -1) {
+            lastWord = firstWord;
+        } else {
+            lastWord = message.substring(lastSpace + 1).toUpperCase().replaceAll("[^A-Z]", "");
+        }
 
         MessageHash = firstTwo + ":" + amntOfMessage + ":" + firstWord + lastWord;
         return MessageHash;
     }
 
-    // ------------------------------------------------------------------
-    // 4. SentMessage()
-    // ------------------------------------------------------------------
+    //method for sent message
     public String SentMessage(Scanner input) {
         System.out.println("\nPlease choose an option:");
         System.out.println("1. Send Message");
@@ -109,7 +126,11 @@ public class Messages {
                            + "\nMessage Hash: " + MessageHash
                            + "\nRecipient: " + ReceipientCell
                            + "\nMessage: " + SentMessage;
-            sentMessages.add(details);
+
+            // Add this message to the big String
+            allSentMessages = allSentMessages
+                    + "\n--- Message " + totalMessagesSent + " ---\n"
+                    + details + "\n";
 
             return "Message successfully sent.";
         }
@@ -118,7 +139,7 @@ public class Messages {
         }
         else if (choice.equals("3")) {
             createMessageHash();
-            storeMessage();                     // ← simple JSON version
+            storeMessage();
             return "Message successfully stored.";
         }
         else {
@@ -126,45 +147,31 @@ public class Messages {
         }
     }
 
-    // ------------------------------------------------------------------
-    // 5. printMessages()
-    // ------------------------------------------------------------------
+    //print message method 
     public String printMessages() {
-        if (sentMessages.isEmpty()) {
+        if (allSentMessages.equals("")) {
             return "No messages have been sent yet.";
         }
-        StringBuilder sb = new StringBuilder();
-        sb.append("\n===== ALL SENT MESSAGES =====\n");
-        for (int i = 0; i < sentMessages.size(); i++) {
-            sb.append("\n--- Message ").append(i + 1).append(" ---\n");
-            sb.append(sentMessages.get(i)).append("\n");
-        }
-        sb.append("=============================\n");
-        return sb.toString();
+
+        return "\n===== ALL SENT MESSAGES =====\n"
+             + allSentMessages
+             + "=============================\n";
     }
 
-    // ------------------------------------------------------------------
-    // 6. returnTotalMessages()
-    // ------------------------------------------------------------------
+    // return total messages
     public int returnTotalMessages() {
         return totalMessagesSent;
     }
 
-    // ------------------------------------------------------------------
     // Helper: generate a random 10-digit Message ID
-    // ------------------------------------------------------------------
     public void generateMessageID() {
         long id = ThreadLocalRandom.current().nextLong(1_000_000_000L, 10_000_000_000L);
         this.messageID = String.valueOf(id);
     }
 
-    // ------------------------------------------------------------------
-    // 7. storeMessage() – SIMPLE JSON version
-    //    Each message is saved as one line in storedMessages.json
-    // ------------------------------------------------------------------
+    // storeMessage() – SIMPLE JSON version
     public void storeMessage() {
         try {
-            // Build one JSON object (single line)
             String jsonLine = "{"
                     + "\"messageID\":\"" + messageID + "\","
                     + "\"messageHash\":\"" + MessageHash + "\","
@@ -172,7 +179,6 @@ public class Messages {
                     + "\"message\":\"" + SentMessage.replace("\"", "\\\"") + "\""
                     + "}";
 
-            // Append to the file (creates the file if it does not exist)
             java.io.FileWriter writer = new java.io.FileWriter("storedMessages.json", true);
             writer.write(jsonLine + "\n");
             writer.close();
