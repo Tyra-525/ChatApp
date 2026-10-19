@@ -51,7 +51,17 @@ public class Messages {
         return true;
     }
     
-    public String checkMessageLength(String message) {
+  
+    // Method for recipient Cell
+    public String checkRecipientCell(String cell) {
+        if (cell == null || cell.trim().isEmpty() || !cell.matches("\\+27\\d{9}")) {
+            return "Cell phone number is incorrectly formatted or does not contain an international code. Please correct the number and try again.";
+        }
+        this.ReceipientCell = cell.trim();
+        return "Cell phone number successfully captured.";
+    }
+    
+      public String checkMessageLength(String message) {
     if (message == null) {
         return "Message exceeds 250 characters by 0; please reduce the size.";
     }
@@ -63,20 +73,7 @@ public class Messages {
     return "Message ready to send.";
 }
 
-    // Method for recipient Cell
-    public String checkRecipientCell(String cell) {
-    if (cell == null || cell.trim().isEmpty()) {
-        return "Cell phone number is incorrectly formatted or does not contain an international code. Please correct the number and try again.";
-    }
-    cell = cell.trim();
-    if (!cell.matches("\\+27\\d{9}")) {
-        return "Cell phone number is incorrectly formatted or does not contain an international code. Please correct the number and try again.";
-    }
-    this.ReceipientCell = cell;
-    return "Cell phone number successfully captured.";
-}
-
-    //method for message hash (NO ARRAYS)
+    //method for message hash 
     public String createMessageHash() {
         if (messageID == null || SentMessage == null || SentMessage.trim().isEmpty()) {
             return "00:0:EMPTY";
@@ -135,7 +132,7 @@ public class Messages {
             return "Message successfully sent.";
         }
         else if (choice.equals("2") || choice.equals("0")) {
-            return "Press 0 to delete the message – Message disregarded.";
+            return "Press 0 to delete the message Message disregarded.";
         }
         else if (choice.equals("3")) {
             createMessageHash();
@@ -163,13 +160,13 @@ public class Messages {
         return totalMessagesSent;
     }
 
-    // Helper: generate a random 10-digit Message ID
+    //  generate a random 10-digit Message ID
     public void generateMessageID() {
         long id = ThreadLocalRandom.current().nextLong(1_000_000_000L, 10_000_000_000L);
         this.messageID = String.valueOf(id);
     }
 
-    // storeMessage() – SIMPLE JSON version
+    // json store message 
     public void storeMessage() {
         try {
             String jsonLine = "{"

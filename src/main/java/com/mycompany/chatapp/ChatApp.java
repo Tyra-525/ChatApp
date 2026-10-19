@@ -127,41 +127,40 @@ public class ChatApp {
     }
 
     // ==================== Part 2 ====================
-    public static void QuickChat(Scanner input) {
+   public static void QuickChat(Scanner input) {
 
-        System.out.println("Welcome to QuickChat.");
+    System.out.println("Welcome to QuickChat.");
 
-        System.out.print("How many messages would you like to enter? ");
-        int maxMessages;
-        try {
-            maxMessages = Integer.parseInt(input.nextLine().trim());
-            if (maxMessages <= 0) {
-                System.out.println("You must enter at least 1 message. Returning to main menu.");
-                return;
-            }
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid number. Returning to main menu.");
+    // Ask how many messages the user wants to send
+    System.out.print("How many messages would you like to enter? ");
+    int maxMessages;
+    try {
+        maxMessages = Integer.parseInt(input.nextLine().trim());
+        if (maxMessages <= 0) {
+            System.out.println("You must enter at least 1 message.");
             return;
         }
+    } catch (NumberFormatException e) {
+        System.out.println("Invalid number.");
+        return;
+    }
 
-        boolean inMenu = true;
-        int messagesEntered = 0;
+    boolean inMenu = true;
 
-        while (inMenu) {
-            System.out.println("\n===== QUICKCHAT MENU =====");
-            System.out.println("1) Send Messages");
-            System.out.println("2) Show recently sent messages");
-            System.out.println("3) Quit");
-            System.out.print("Choose an option: ");
+    while (inMenu) {   // WHILE LOOP – required by rubric
+        System.out.println("\n===== QUICKCHAT MENU =====");
+        System.out.println("1) Send Messages");
+        System.out.println("2) Show recently sent messages");
+        System.out.println("3) Quit");
+        System.out.print("Choose an option: ");
 
-            String choice = input.nextLine().trim();
+        String choice = input.nextLine().trim();
 
-            if (choice.equals("1")) {
-                if (messagesEntered >= maxMessages) {
-                    System.out.println("You have already entered the maximum number of messages ("
-                                       + maxMessages + ").");
-                    continue;
-                }
+        if (choice.equals("1")) {
+
+            // FOR LOOP – required by rubric (uses loop counter)
+            for (int i = 1; i <= maxMessages; i++) {
+                System.out.println("\n----- Entering Message " + i + " of " + maxMessages + " -----");
 
                 Messages msg = new Messages();
                 msg.generateMessageID();
@@ -170,29 +169,27 @@ public class ChatApp {
                 // Recipient
                 String cellResult;
                 do {
-                    System.out.print("Enter recipient cell number (e.g. +27821234567): ");
+                    System.out.print("Enter recipient cell number (e.g. +27718693002): ");
                     cellResult = msg.checkRecipientCell(input.nextLine());
                     System.out.println(cellResult);
-                } while (!cellResult.equals("Cell number successfully captured."));
+                } while (!cellResult.equals("Cell phone number successfully captured."));
 
                 // Message text
                 String text;
+                String lengthResult;
                 do {
                     System.out.print("Enter your message (max 250 characters): ");
                     text = input.nextLine();
-                    if (text.length() > Messages.Max_Length) {
-                        System.out.println("Please enter a message of less than 250 characters.");
-                    }
-                } while (text.length() > Messages.Max_Length);
-
-                msg.SentMessage = text;
+                    lengthResult = msg.checkMessageLength(text);
+                    System.out.println(lengthResult);
+                } while (!lengthResult.equals("Message ready to send."));
 
                 // Send / Disregard / Store
                 String result = msg.SentMessage(input);
                 System.out.println(result);
 
                 if (result.equals("Message successfully sent.")) {
-                    messagesEntered++;
+                    // Display full details (required by rubric)
                     System.out.println("\n----- MESSAGE DETAILS -----");
                     System.out.println("Message ID   : " + msg.getID());
                     System.out.println("Message Hash : " + msg.getMessageHash());
@@ -200,22 +197,22 @@ public class ChatApp {
                     System.out.println("Message      : " + msg.getMessage());
                     System.out.println("---------------------------");
                 }
+            }
 
-            }
-            else if (choice.equals("2")) {
-                System.out.println("Coming Soon.");
-            }
-            else if (choice.equals("3") || choice.equalsIgnoreCase("quit")) {
-                Messages dummy = new Messages();
-                System.out.println("\nTotal number of messages sent: "
-                                   + dummy.returnTotalMessages());
-                System.out.println(dummy.printMessages());
-                System.out.println("Thank you for using QuickChat. Goodbye!");
-                inMenu = false;
-            }
-            else {
-                System.out.println("Invalid option. Please try again.");
-            }
+        }
+        else if (choice.equals("2")) {
+            System.out.println("Coming Soon.");
+        }
+        else if (choice.equals("3") || choice.equalsIgnoreCase("quit")) {
+            Messages dummy = new Messages();
+            System.out.println("\nTotal number of messages sent: " + dummy.returnTotalMessages());
+            System.out.println(dummy.printMessages());
+            System.out.println("Thank you for using QuickChat. Goodbye!");
+            inMenu = false;
+        }
+        else {
+            System.out.println("Invalid option. Please try again.");
         }
     }
+   }
 }
