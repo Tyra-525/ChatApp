@@ -60,7 +60,7 @@ public class Messages {
         this.ReceipientCell = cell.trim();
         return "Cell phone number successfully captured.";
     }
-    
+    //method for message length
       public String checkMessageLength(String message) {
     if (message == null) {
         return "Message exceeds 250 characters by 0; please reduce the size.";
@@ -108,7 +108,7 @@ public class Messages {
     public String SentMessage(Scanner input) {
         System.out.println("\nPlease choose an option:");
         System.out.println("1. Send Message");
-        System.out.println("2. Disregard Message");
+        System.out.println("2. Press 0 to disregard message");
         System.out.println("3. Store Message to send later");
         System.out.print("Enter choice: ");
 
@@ -132,7 +132,7 @@ public class Messages {
             return "Message successfully sent.";
         }
         else if (choice.equals("2") || choice.equals("0")) {
-            return "Press 0 to delete the message Message disregarded.";
+            return "Message disregarded";
         }
         else if (choice.equals("3")) {
             createMessageHash();

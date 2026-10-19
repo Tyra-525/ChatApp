@@ -147,7 +147,7 @@ public class ChatApp {
 
     boolean inMenu = true;
 
-    while (inMenu) {   // WHILE LOOP – required by rubric
+    while (inMenu) {   
         System.out.println("\n===== QUICKCHAT MENU =====");
         System.out.println("1) Send Messages");
         System.out.println("2) Show recently sent messages");
@@ -158,7 +158,7 @@ public class ChatApp {
 
         if (choice.equals("1")) {
 
-            // FOR LOOP – required by rubric (uses loop counter)
+            
             for (int i = 1; i <= maxMessages; i++) {
                 System.out.println("\n----- Entering Message " + i + " of " + maxMessages + " -----");
 
@@ -189,7 +189,7 @@ public class ChatApp {
                 System.out.println(result);
 
                 if (result.equals("Message successfully sent.")) {
-                    // Display full details (required by rubric)
+                    
                     System.out.println("\n----- MESSAGE DETAILS -----");
                     System.out.println("Message ID   : " + msg.getID());
                     System.out.println("Message Hash : " + msg.getMessageHash());
