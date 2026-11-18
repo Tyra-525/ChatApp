@@ -107,7 +107,7 @@ public class ChatApp {
             if (registeredAccount.getUsername().equals(username)
                     && registeredAccount.getPassword().equals(password)) {
 
-                System.out.println("\nLogin successful! Welcome back to ChatAPP "
+                System.out.println("\nLogin successful!"
                                    + registeredAccount.getName() + ".\n");
 
                 // Start Part 2 – QuickChat
@@ -126,28 +126,31 @@ public class ChatApp {
         }
     }
 
-    // ==================== Part 2 ====================
-   public static void QuickChat(Scanner input) {
+   // ==================== Part 2 ====================
+public static void QuickChat(Scanner input) {
 
     System.out.println("Welcome to QuickChat.");
 
-    // Ask how many messages the user wants to send
-    System.out.print("How many messages would you like to enter? ");
-    int maxMessages;
-    try {
-        maxMessages = Integer.parseInt(input.nextLine().trim());
-        if (maxMessages <= 0) {
-            System.out.println("You must enter at least 1 message.");
-            return;
+    // Ask how many messages the user wants to send – keep asking until valid
+    int maxMessages = 0;
+    while (true) {
+        System.out.print("How many messages would you like to enter? ");
+        String line = input.nextLine().trim();
+        try {
+            maxMessages = Integer.parseInt(line);
+            if (maxMessages > 0) {
+                break;                     // valid positive number
+            } else {
+                System.out.println("You must enter a number greater than 0. Please try again.");
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid number. Please enter a whole number greater than 0.");
         }
-    } catch (NumberFormatException e) {
-        System.out.println("Invalid number.");
-        return;
     }
 
     boolean inMenu = true;
 
-    while (inMenu) {   
+    while (inMenu) {
         System.out.println("\n===== QUICKCHAT MENU =====");
         System.out.println("1) Send Messages");
         System.out.println("2) Show recently sent messages");
@@ -158,7 +161,6 @@ public class ChatApp {
 
         if (choice.equals("1")) {
 
-            
             for (int i = 1; i <= maxMessages; i++) {
                 System.out.println("\n----- Entering Message " + i + " of " + maxMessages + " -----");
 
@@ -189,7 +191,6 @@ public class ChatApp {
                 System.out.println(result);
 
                 if (result.equals("Message successfully sent.")) {
-                    
                     System.out.println("\n----- MESSAGE DETAILS -----");
                     System.out.println("Message ID   : " + msg.getID());
                     System.out.println("Message Hash : " + msg.getMessageHash());
@@ -199,20 +200,17 @@ public class ChatApp {
                 }
             }
 
-        }
-        else if (choice.equals("2")) {
+        } else if (choice.equals("2")) {
             System.out.println("Coming Soon.");
-        }
-        else if (choice.equals("3") || choice.equalsIgnoreCase("quit")) {
+        } else if (choice.equals("3") || choice.equalsIgnoreCase("quit")) {
             Messages dummy = new Messages();
             System.out.println("\nTotal number of messages sent: " + dummy.returnTotalMessages());
             System.out.println(dummy.printMessages());
             System.out.println("Thank you for using QuickChat. Goodbye!");
             inMenu = false;
-        }
-        else {
+        } else {
             System.out.println("Invalid option. Please try again.");
         }
     }
-   }
+}
 }

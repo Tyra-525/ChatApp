@@ -1,16 +1,13 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.mycompany.chatapp;
+
 import java.util.Scanner;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
-/**
- *
- * @author Student
- */
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 public class Messages {
 
     public static final int Max_Length = 250;
@@ -20,6 +17,10 @@ public class Messages {
 
     // Running total of messages that were actually sent
     public static int totalMessagesSent = 0;
+
+    // Running total of messages that were processed (sent OR stored)
+    // This is what goes into the message hash so stored messages also get a proper number
+    public static int totalMessagesProcessed = 0;
 
     // Instance fields
     public String messageID;
@@ -42,7 +43,7 @@ public class Messages {
     public int getamntOfMessage() { return amntOfMessage; }
     public String getstoreMessage() { return storeMessage; }
 
-    //method for message ID
+    // Check that the Message ID is exactly 10 characters
     public boolean checkMessageID() {
         if (messageID == null || messageID.length() != 10) {
             System.out.println("Message ID must be exactly 10 characters.");
@@ -50,9 +51,8 @@ public class Messages {
         }
         return true;
     }
-    
-  
-    // Method for recipient Cell
+
+    // Validate recipient cell number
     public String checkRecipientCell(String cell) {
         if (cell == null || cell.trim().isEmpty() || !cell.matches("\\+27\\d{9}")) {
             return "Cell phone number is incorrectly formatted or does not contain an international code. Please correct the number and try again.";
@@ -60,20 +60,21 @@ public class Messages {
         this.ReceipientCell = cell.trim();
         return "Cell phone number successfully captured.";
     }
-    //method for message length
-      public String checkMessageLength(String message) {
-    if (message == null) {
-        return "Message exceeds 250 characters by 0; please reduce the size.";
-    }
-    if (message.length() > Max_Length) {
-        int over = message.length() - Max_Length;
-        return "Message exceeds 250 characters by " + over + "; please reduce the size.";
-    }
-    this.SentMessage = message;
-    return "Message ready to send.";
-}
 
-    //method for message hash 
+    // Validate message length
+    public String checkMessageLength(String message) {
+        if (message == null) {
+            return "Message exceeds 250 characters by 0; please reduce the size.";
+        }
+        if (message.length() > Max_Length) {
+            int over = message.length() - Max_Length;
+            return "Message exceeds 250 characters by " + over + "; please reduce the size.";
+        }
+        this.SentMessage = message;
+        return "Message ready to send.";
+    }
+
+    // Create the message hash (punctuation is stripped)
     public String createMessageHash() {
         if (messageID == null || SentMessage == null || SentMessage.trim().isEmpty()) {
             return "00:0:EMPTY";
@@ -82,7 +83,7 @@ public class Messages {
         String firstTwo = messageID.substring(0, 2);
         String message = SentMessage.trim();
 
-        // Get the first word
+        // First word (letters only)
         String firstWord;
         int firstSpace = message.indexOf(" ");
         if (firstSpace == -1) {
@@ -91,7 +92,7 @@ public class Messages {
             firstWord = message.substring(0, firstSpace).toUpperCase().replaceAll("[^A-Z]", "");
         }
 
-        // Get the last word
+        // Last word (letters only)
         String lastWord;
         int lastSpace = message.lastIndexOf(" ");
         if (lastSpace == -1) {
@@ -104,7 +105,7 @@ public class Messages {
         return MessageHash;
     }
 
-    //method for sent message
+    // Handle Send / Disregard / Store
     public String SentMessage(Scanner input) {
         System.out.println("\nPlease choose an option:");
         System.out.println("1. Send Message");
@@ -115,16 +116,18 @@ public class Messages {
         String choice = input.nextLine().trim();
 
         if (choice.equals("1")) {
-            totalMessagesSent++;
-            amntOfMessage = totalMessagesSent;
+            // This message is being processed → give it the next number
+            totalMessagesProcessed++;
+            amntOfMessage = totalMessagesProcessed;
             createMessageHash();
+
+            totalMessagesSent++;   // only count actual sends for the final total
 
             String details = "Message ID: " + messageID
                            + "\nMessage Hash: " + MessageHash
                            + "\nRecipient: " + ReceipientCell
                            + "\nMessage: " + SentMessage;
 
-            // Add this message to the big String
             allSentMessages = allSentMessages
                     + "\n--- Message " + totalMessagesSent + " ---\n"
                     + details + "\n";
@@ -135,6 +138,9 @@ public class Messages {
             return "Message disregarded";
         }
         else if (choice.equals("3")) {
+            // Stored messages also receive a proper sequential number
+            totalMessagesProcessed++;
+            amntOfMessage = totalMessagesProcessed;
             createMessageHash();
             storeMessage();
             return "Message successfully stored.";
@@ -144,45 +150,77 @@ public class Messages {
         }
     }
 
-    //print message method 
     public String printMessages() {
         if (allSentMessages.equals("")) {
             return "No messages have been sent yet.";
         }
-
         return "\n===== ALL SENT MESSAGES =====\n"
              + allSentMessages
              + "=============================\n";
     }
 
-    // return total messages
     public int returnTotalMessages() {
         return totalMessagesSent;
     }
 
-    //  generate a random 10-digit Message ID
+    /**
+     * Generate a 10-digit Message ID by building it digit-by-digit
+     * (as required by the feedback).
+     */
     public void generateMessageID() {
-        long id = ThreadLocalRandom.current().nextLong(1_000_000_000L, 10_000_000_000L);
-        this.messageID = String.valueOf(id);
+        StringBuilder id = new StringBuilder();
+        for (int i = 0; i < 10; i++) {
+            id.append(ThreadLocalRandom.current().nextInt(0, 10));
+        }
+        this.messageID = id.toString();
     }
 
-    // json store message 
+    /**
+     * Store the message in a proper JSON array in storedMessages.json
+     */
     public void storeMessage() {
         try {
-            String jsonLine = "{"
+            File file = new File("storedMessages.json");
+            String existingContent = "";
+
+            if (file.exists() && file.length() > 0) {
+                existingContent = new String(Files.readAllBytes(Paths.get("storedMessages.json"))).trim();
+            }
+
+            // Build the new message object
+            String newObject = "{"
                     + "\"messageID\":\"" + messageID + "\","
                     + "\"messageHash\":\"" + MessageHash + "\","
                     + "\"recipient\":\"" + ReceipientCell + "\","
                     + "\"message\":\"" + SentMessage.replace("\"", "\\\"") + "\""
                     + "}";
 
-            java.io.FileWriter writer = new java.io.FileWriter("storedMessages.json", true);
-            writer.write(jsonLine + "\n");
-            writer.close();
+            String updatedJson;
+
+            if (existingContent.isEmpty()) {
+                // First message → create a new array
+                updatedJson = "[\n  " + newObject + "\n]";
+            } else {
+                // Append to existing array
+                // Remove the closing ]
+                if (existingContent.endsWith("]")) {
+                    existingContent = existingContent.substring(0, existingContent.length() - 1).trim();
+                }
+                // If the array already has content, add a comma
+                if (!existingContent.equals("[")) {
+                    existingContent = existingContent + ",";
+                }
+                updatedJson = existingContent + "\n  " + newObject + "\n]";
+            }
+
+            // Overwrite the file with the complete valid JSON array
+            try (FileWriter writer = new FileWriter("storedMessages.json", false)) {
+                writer.write(updatedJson);
+            }
 
             System.out.println("Message saved to storedMessages.json");
         }
-        catch (Exception e) {
+        catch (IOException e) {
             System.out.println("Error while storing message: " + e.getMessage());
         }
     }
