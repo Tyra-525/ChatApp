@@ -1,172 +1,108 @@
 package com.mycompany.chatapp;
 
-import java.util.Scanner;
-import java.util.concurrent.ThreadLocalRandom;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+/**
+ * Represents one QuickChat message and holds the arrays that store every message.
+ *
+ * The first five static lists are PARALLEL arrays: index i in each list describes
+ * the same message. They contain every message that was processed (sent,
+ * disregarded or stored). The three category lists hold only the message text
+ * for each flag.
+ *
+ * Referencing (replace with your institution's referencing format):
+ * Oracle (n.d.) Pattern and Matcher, Java Platform SE API documentation. Available at:
+ * https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/regex/Pattern.html
+ * (Accessed: 19 November 2026).
+ * Oracle (n.d.) Files.readString and Files.writeString, Java Platform SE API documentation.
+ * Available at: https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/file/Files.html
+ * (Accessed: 19 November 2026).
+ * Regular expressions are used below to read the stored messages JSON file into the arrays.
+ */
 public class Messages {
 
-    public static final int Max_Length = 250;
+    public static final int MAX_LENGTH = 250;
 
-    // Stores all successfully sent messages as one long String
-    public static String allSentMessages = "";
+    // Flags for each message
+    public static final String SENT = "Sent";
+    public static final String DISREGARD = "Disregard";
+    public static final String STORED = "Stored";
 
-    // Running total of messages that were actually sent
-    public static int totalMessagesSent = 0;
+    // File used to persist stored messages (tests point this at a temporary file)
+    public static String storeFile = "storedMessages.json";
 
-    // Running total of messages that were processed (sent OR stored)
-    // This is what goes into the message hash so stored messages also get a proper number
-    public static int totalMessagesProcessed = 0;
+    // Parallel arrays: one entry per message, same index = same message
+    public static ArrayList<String> messageIDs = new ArrayList<>();
+    public static ArrayList<String> messageHashes = new ArrayList<>();
+    public static ArrayList<String> recipients = new ArrayList<>();
+    public static ArrayList<String> messageTexts = new ArrayList<>();
+    public static ArrayList<String> flags = new ArrayList<>();
 
-    // Instance fields
-    public String messageID;
-    public String ReceipientCell;
-    public String MessageHash;
-    public String SentMessage;
-    public String PrintMessage;
-    public int amntOfMessage;
-    public String storeMessage;
+    // Arrays required by the task: message text for each category
+    public static ArrayList<String> sentMessages = new ArrayList<>();
+    public static ArrayList<String> disregardedMessages = new ArrayList<>();
+    public static ArrayList<String> storedMessages = new ArrayList<>();
 
-    // Constructor
-    public Messages() {}
+    private static int messageCounter = 0;
 
-    // Getters
+    // Fields for one message
+    private String messageID;
+    private String recipientCell;
+    private String messageHash;
+    private String messageText;
+    private int messageNumber;
+
+    // ==================== GETTERS AND SETTERS ====================
+
     public String getID() { return messageID; }
-    public String getReceipientCell() { return ReceipientCell; }
-    public String getMessageHash() { return MessageHash; }
-    public String getMessage() { return SentMessage; }
-    public String getPrintMessage() { return PrintMessage; }
-    public int getamntOfMessage() { return amntOfMessage; }
-    public String getstoreMessage() { return storeMessage; }
+    public String getRecipientCell() { return recipientCell; }
+    public String getMessageHash() { return messageHash; }
+    public String getMessage() { return messageText; }
+    public int getMessageNumber() { return messageNumber; }
 
-    // Check that the Message ID is exactly 10 characters
+    public void setMessageID(String messageID) { this.messageID = messageID; }
+    public void setRecipientCell(String recipientCell) { this.recipientCell = recipientCell; }
+    public void setMessageText(String messageText) { this.messageText = messageText; }
+    public void setMessageNumber(int messageNumber) { this.messageNumber = messageNumber; }
+
+    // ==================== VALIDATION ====================
+
+    /** A message ID is valid when it is exactly 10 characters long. */
     public boolean checkMessageID() {
-        if (messageID == null || messageID.length() != 10) {
-            System.out.println("Message ID must be exactly 10 characters.");
-            return false;
-        }
-        return true;
+        return messageID != null && messageID.length() == 10;
     }
 
-    // Validate recipient cell number
     public String checkRecipientCell(String cell) {
-        if (cell == null || cell.trim().isEmpty() || !cell.matches("\\+27\\d{9}")) {
-            return "Cell phone number is incorrectly formatted or does not contain an international code. Please correct the number and try again.";
+        if (cell == null || !cell.trim().matches("\\+27\\d{9}")) {
+            return "Cell phone number is incorrectly formatted or does not contain an international code. "
+                 + "Please correct the number and try again.";
         }
-        this.ReceipientCell = cell.trim();
+        this.recipientCell = cell.trim();
         return "Cell phone number successfully captured.";
     }
 
-    // Validate message length
     public String checkMessageLength(String message) {
-        if (message == null) {
-            return "Message exceeds 250 characters by 0; please reduce the size.";
+        if (message == null || message.trim().isEmpty()) {
+            return "Message cannot be empty. Please enter a message.";
         }
-        if (message.length() > Max_Length) {
-            int over = message.length() - Max_Length;
+        if (message.length() > MAX_LENGTH) {
+            int over = message.length() - MAX_LENGTH;
             return "Message exceeds 250 characters by " + over + "; please reduce the size.";
         }
-        this.SentMessage = message;
+        this.messageText = message;
         return "Message ready to send.";
     }
 
-    // Create the message hash (punctuation is stripped)
-    public String createMessageHash() {
-        if (messageID == null || SentMessage == null || SentMessage.trim().isEmpty()) {
-            return "00:0:EMPTY";
-        }
+    // ==================== ID AND HASH ====================
 
-        String firstTwo = messageID.substring(0, 2);
-        String message = SentMessage.trim();
-
-        // First word (letters only)
-        String firstWord;
-        int firstSpace = message.indexOf(" ");
-        if (firstSpace == -1) {
-            firstWord = message.toUpperCase().replaceAll("[^A-Z]", "");
-        } else {
-            firstWord = message.substring(0, firstSpace).toUpperCase().replaceAll("[^A-Z]", "");
-        }
-
-        // Last word (letters only)
-        String lastWord;
-        int lastSpace = message.lastIndexOf(" ");
-        if (lastSpace == -1) {
-            lastWord = firstWord;
-        } else {
-            lastWord = message.substring(lastSpace + 1).toUpperCase().replaceAll("[^A-Z]", "");
-        }
-
-        MessageHash = firstTwo + ":" + amntOfMessage + ":" + firstWord + lastWord;
-        return MessageHash;
-    }
-
-    // Handle Send / Disregard / Store
-    public String SentMessage(Scanner input) {
-        System.out.println("\nPlease choose an option:");
-        System.out.println("1. Send Message");
-        System.out.println("2. Press 0 to disregard message");
-        System.out.println("3. Store Message to send later");
-        System.out.print("Enter choice: ");
-
-        String choice = input.nextLine().trim();
-
-        if (choice.equals("1")) {
-            // This message is being processed → give it the next number
-            totalMessagesProcessed++;
-            amntOfMessage = totalMessagesProcessed;
-            createMessageHash();
-
-            totalMessagesSent++;   // only count actual sends for the final total
-
-            String details = "Message ID: " + messageID
-                           + "\nMessage Hash: " + MessageHash
-                           + "\nRecipient: " + ReceipientCell
-                           + "\nMessage: " + SentMessage;
-
-            allSentMessages = allSentMessages
-                    + "\n--- Message " + totalMessagesSent + " ---\n"
-                    + details + "\n";
-
-            return "Message successfully sent.";
-        }
-        else if (choice.equals("2") || choice.equals("0")) {
-            return "Message disregarded";
-        }
-        else if (choice.equals("3")) {
-            // Stored messages also receive a proper sequential number
-            totalMessagesProcessed++;
-            amntOfMessage = totalMessagesProcessed;
-            createMessageHash();
-            storeMessage();
-            return "Message successfully stored.";
-        }
-        else {
-            return "Invalid option. Message not sent.";
-        }
-    }
-
-    public String printMessages() {
-        if (allSentMessages.equals("")) {
-            return "No messages have been sent yet.";
-        }
-        return "\n===== ALL SENT MESSAGES =====\n"
-             + allSentMessages
-             + "=============================\n";
-    }
-
-    public int returnTotalMessages() {
-        return totalMessagesSent;
-    }
-
-    /**
-     * Generate a 10-digit Message ID by building it digit-by-digit
-     * (as required by the feedback).
-     */
+    /** Builds a 10-digit message ID one random digit at a time. */
     public void generateMessageID() {
         StringBuilder id = new StringBuilder();
         for (int i = 0; i < 10; i++) {
@@ -175,53 +111,120 @@ public class Messages {
         this.messageID = id.toString();
     }
 
-    /**
-     * Store the message in a proper JSON array in storedMessages.json
-     */
-    public void storeMessage() {
-        try {
-            File file = new File("storedMessages.json");
-            String existingContent = "";
-
-            if (file.exists() && file.length() > 0) {
-                existingContent = new String(Files.readAllBytes(Paths.get("storedMessages.json"))).trim();
-            }
-
-            // Build the new message object
-            String newObject = "{"
-                    + "\"messageID\":\"" + messageID + "\","
-                    + "\"messageHash\":\"" + MessageHash + "\","
-                    + "\"recipient\":\"" + ReceipientCell + "\","
-                    + "\"message\":\"" + SentMessage.replace("\"", "\\\"") + "\""
-                    + "}";
-
-            String updatedJson;
-
-            if (existingContent.isEmpty()) {
-                // First message → create a new array
-                updatedJson = "[\n  " + newObject + "\n]";
-            } else {
-                // Append to existing array
-                // Remove the closing ]
-                if (existingContent.endsWith("]")) {
-                    existingContent = existingContent.substring(0, existingContent.length() - 1).trim();
-                }
-                // If the array already has content, add a comma
-                if (!existingContent.equals("[")) {
-                    existingContent = existingContent + ",";
-                }
-                updatedJson = existingContent + "\n  " + newObject + "\n]";
-            }
-
-            // Overwrite the file with the complete valid JSON array
-            try (FileWriter writer = new FileWriter("storedMessages.json", false)) {
-                writer.write(updatedJson);
-            }
-
-            System.out.println("Message saved to storedMessages.json");
+    /** Hash format: first two ID digits : message number : FIRSTWORDLASTWORD. */
+    public String createMessageHash() {
+        if (messageID == null || messageText == null || messageText.trim().isEmpty()) {
+            return "00:0:EMPTY";
         }
-        catch (IOException e) {
-            System.out.println("Error while storing message: " + e.getMessage());
-        }
+
+        String message = messageText.trim();
+        String firstWord = cleanWord(message.substring(0, firstSpaceOrEnd(message)));
+        String lastWord = cleanWord(message.substring(message.lastIndexOf(" ") + 1));
+
+        messageHash = messageID.substring(0, 2) + ":" + messageNumber + ":" + firstWord + lastWord;
+        return messageHash;
     }
-}
+
+    private int firstSpaceOrEnd(String message) {
+        int space = message.indexOf(" ");
+        return space == -1 ? message.length() : space;
+    }
+
+    /** Upper-cases a word and strips everything except letters. */
+    private String cleanWord(String word) {
+        return word.toUpperCase().replaceAll("[^A-Z]", "");
+    }
+
+    // ==================== SEND / DISREGARD / STORE ====================
+
+    /** Shows the send/disregard/store menu and processes the user's choice. */
+    public String sendMessageOption(Scanner input) {
+        System.out.println("\nPlease choose an option:");
+        System.out.println("1. Send Message");
+        System.out.println("2. Disregard Message (or press 0)");
+        System.out.println("3. Store Message to send later");
+        System.out.print("Enter choice: ");
+        return processChoice(input.nextLine().trim());
+    }
+
+    /**
+     * Applies a menu choice to this message. Kept separate from the Scanner so
+     * it can be unit tested directly.
+     */
+    public String processChoice(String choice) {
+        String flag;
+        String result;
+
+        switch (choice) {
+            case "1":
+                flag = SENT;
+                result = "Message successfully sent.";
+                break;
+            case "0":
+            case "2":
+                flag = DISREGARD;
+                result = "Message disregarded";
+                break;
+            case "3":
+                flag = STORED;
+                result = "Message successfully stored.";
+                break;
+            default:
+                return "Invalid option. Message not sent.";
+        }
+
+        messageNumber = nextMessageNumber();
+        createMessageHash();
+        add(this, flag);
+
+        if (flag.equals(STORED)) {
+            saveStoredMessages();
+        }
+        return result;
+    }
+
+     // ==================== POPULATING THE ARRAYS ====================
+
+    /** Returns the next message number (used in the message hash). */
+    public static int nextMessageNumber() {
+        messageCounter++;
+        return messageCounter;
+    }
+
+    /** Adds a message object to the arrays under the given flag. */
+    public static void add(Messages message, String flag) {
+        add(message.getID(), message.getMessageHash(), message.getRecipientCell(),
+                message.getMessage(), flag);
+    }
+
+    /** Adds one message to the parallel arrays and to its category array. */
+    public static void add(String id, String hash, String recipient, String text, String flag) {
+        messageIDs.add(id);
+        messageHashes.add(hash);
+        recipients.add(recipient);
+        messageTexts.add(text);
+        flags.add(flag);
+        categoryList(flag).add(text);
+    }
+
+    private static ArrayList<String> categoryList(String flag) {
+        if (flag.equals(SENT)) {
+            return sentMessages;
+        }
+        if (flag.equals(DISREGARD)) {
+            return disregardedMessages;
+        }
+        return storedMessages;
+    }
+
+    /** Empties every array (used by the unit tests). */
+    public static void reset() {
+        messageIDs.clear();
+        messageHashes.clear();
+        recipients.clear();
+        messageTexts.clear();
+        flags.clear();
+        sentMessages.clear();
+        disregardedMessages.clear();
+        storedMessages.clear();
+        messageCounter = 0;
