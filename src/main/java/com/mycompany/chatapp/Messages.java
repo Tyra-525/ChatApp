@@ -183,7 +183,7 @@ public class Messages {
         return result;
     }
 
-     // ==================== POPULATING THE ARRAYS ====================
+    // ==================== POPULATING THE ARRAYS ====================
 
     /** Returns the next message number (used in the message hash). */
     public static int nextMessageNumber() {
@@ -228,8 +228,9 @@ public class Messages {
         disregardedMessages.clear();
         storedMessages.clear();
         messageCounter = 0;
+    }
 
-  // ==================== JSON FILE ====================
+    // ==================== JSON FILE ====================
 
     /** Writes every stored message to the JSON file as a proper JSON array. */
     public static void saveStoredMessages() {
@@ -334,7 +335,8 @@ public class Messages {
         }
         return result.toString();
     }
- // ==================== STORED MESSAGES MENU FEATURES ====================
+
+    // ==================== STORED MESSAGES MENU FEATURES ====================
 
     /** 2a. Sender and recipient of every stored message. */
     public static String displayStoredSenderAndRecipient(String sender) {
@@ -437,7 +439,7 @@ public class Messages {
         return report.append("================================\n").toString();
     }
 
- // ==================== REPORTING (USED ON QUIT) ====================
+    // ==================== REPORTING (USED ON QUIT) ====================
 
     public String printMessages() {
         return sentReport();
@@ -446,3 +448,4 @@ public class Messages {
     public int returnTotalMessages() {
         return sentMessages.size();
     }
+}
