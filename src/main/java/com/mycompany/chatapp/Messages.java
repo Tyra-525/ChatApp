@@ -334,3 +334,106 @@ public class Messages {
         }
         return result.toString();
     }
+ // ==================== STORED MESSAGES MENU FEATURES ====================
+
+    /** 2a. Sender and recipient of every stored message. */
+    public static String displayStoredSenderAndRecipient(String sender) {
+        StringBuilder output = new StringBuilder();
+        for (int i = 0; i < flags.size(); i++) {
+            if (flags.get(i).equals(STORED)) {
+                output.append("Sender: ").append(sender)
+                      .append(" | Recipient: ").append(recipients.get(i)).append("\n");
+            }
+        }
+        return output.length() == 0 ? "No stored messages." : output.toString();
+    }
+
+    /** 2b. The longest stored message. */
+    public static String longestStoredMessage() {
+        if (storedMessages.isEmpty()) {
+            return "No stored messages.";
+        }
+        String longest = storedMessages.get(0);
+        for (String text : storedMessages) {
+            if (text.length() > longest.length()) {
+                longest = text;
+            }
+        }
+        return longest;
+    }
+
+    /** 2c. Search for a message ID; returns the recipient and message. */
+    public static String searchByMessageID(String id) {
+        int index = messageIDs.indexOf(id);
+        if (index == -1) {
+            return "No message found with ID " + id + ".";
+        }
+        return "Recipient: " + recipients.get(index) + "\nMessage: " + messageTexts.get(index);
+    }
+
+    /** 2d. All sent or stored messages for one recipient. */
+    public static ArrayList<String> searchByRecipient(String recipient) {
+        ArrayList<String> found = new ArrayList<>();
+        for (int i = 0; i < recipients.size(); i++) {
+            boolean notDisregarded = !flags.get(i).equals(DISREGARD);
+            if (notDisregarded && recipients.get(i).equals(recipient)) {
+                found.add(messageTexts.get(i));
+            }
+        }
+        return found;
+    }
+
+    /** 2e. Delete a message using its hash. */
+    public static String deleteByHash(String hash) {
+        int index = messageHashes.indexOf(hash);
+        if (index == -1) {
+            return "No message found with that hash.";
+        }
+
+        String text = messageTexts.get(index);
+        String flag = flags.get(index);
+
+        categoryList(flag).remove(text);
+        messageIDs.remove(index);
+        messageHashes.remove(index);
+        recipients.remove(index);
+        messageTexts.remove(index);
+        flags.remove(index);
+
+        if (flag.equals(STORED)) {
+            saveStoredMessages();
+        }
+        return "Message: \"" + text + "\" successfully deleted.";
+    }
+
+    // ==================== REPORTS ====================
+
+    /** Report of every sent message (hash, recipient, message). */
+    public static String sentReport() {
+        return buildReport(SENT, "SENT MESSAGES REPORT");
+    }
+
+    /** 2f. Report of the full details of every stored message. */
+    public static String storedReport() {
+        return buildReport(STORED, "STORED MESSAGES REPORT");
+    }
+
+    private static String buildReport(String flag, String title) {
+        StringBuilder report = new StringBuilder("\n===== " + title + " =====\n");
+        int count = 0;
+        for (int i = 0; i < flags.size(); i++) {
+            if (flags.get(i).equals(flag)) {
+                count++;
+                report.append("Message ").append(count).append("\n")
+                      .append("  Message ID   : ").append(messageIDs.get(i)).append("\n")
+                      .append("  Message Hash : ").append(messageHashes.get(i)).append("\n")
+                      .append("  Recipient    : ").append(recipients.get(i)).append("\n")
+                      .append("  Message      : ").append(messageTexts.get(i)).append("\n");
+            }
+        }
+        if (count == 0) {
+            return "No " + flag.toLowerCase() + " messages.";
+        }
+        return report.append("================================\n").toString();
+    }
+
