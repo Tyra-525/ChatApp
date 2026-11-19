@@ -228,3 +228,109 @@ public class Messages {
         disregardedMessages.clear();
         storedMessages.clear();
         messageCounter = 0;
+
+  // ==================== JSON FILE ====================
+
+    /** Writes every stored message to the JSON file as a proper JSON array. */
+    public static void saveStoredMessages() {
+        StringBuilder json = new StringBuilder("[\n");
+        boolean first = true;
+
+        for (int i = 0; i < flags.size(); i++) {
+            if (flags.get(i).equals(STORED)) {
+                if (!first) {
+                    json.append(",\n");
+                }
+                first = false;
+                json.append("  {\"messageID\":\"").append(escapeJson(messageIDs.get(i)))
+                    .append("\",\"messageHash\":\"").append(escapeJson(messageHashes.get(i)))
+                    .append("\",\"recipient\":\"").append(escapeJson(recipients.get(i)))
+                    .append("\",\"message\":\"").append(escapeJson(messageTexts.get(i)))
+                    .append("\"}");
+            }
+        }
+        json.append("\n]");
+
+        try {
+            Files.writeString(Paths.get(storeFile), json.toString());
+            System.out.println("Message saved to " + storeFile);
+        } catch (IOException e) {
+            System.out.println("Error while storing message: " + e.getMessage());
+        }
+    }
+
+    /** Reads the JSON file into the stored messages array (skips IDs already loaded). */
+    public static void loadStoredMessages() {
+        if (!Files.exists(Paths.get(storeFile))) {
+            return;
+        }
+
+        try {
+            String json = Files.readString(Paths.get(storeFile));
+
+            // Matches each  "key":"value"  pair; the value may contain escaped characters
+            Matcher pairs = Pattern.compile("\"(\\w+)\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"").matcher(json);
+
+            String id = "";
+            String hash = "";
+            String recipient = "";
+
+            // Each stored message is written as: messageID, messageHash, recipient, message
+            while (pairs.find()) {
+                String value = unescapeJson(pairs.group(2));
+                switch (pairs.group(1)) {
+                    case "messageID":
+                        id = value;
+                        break;
+                    case "messageHash":
+                        hash = value;
+                        break;
+                    case "recipient":
+                        recipient = value;
+                        break;
+                    case "message":
+                        if (!messageIDs.contains(id)) {
+                            add(id, hash, recipient, value, STORED);
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Could not read " + storeFile + ": " + e.getMessage());
+        }
+    }
+
+    /** Makes text safe to place inside a JSON string. */
+    private static String escapeJson(String text) {
+        return text.replace("\\", "\\\\")
+                   .replace("\"", "\\\"")
+                   .replace("\n", "\\n")
+                   .replace("\r", "\\r")
+                   .replace("\t", "\\t");
+    }
+
+    /** Reverses escapeJson when reading text back from the file. */
+    private static String unescapeJson(String text) {
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == '\\' && i + 1 < text.length()) {
+                i++;
+                char next = text.charAt(i);
+                if (next == 'n') {
+                    result.append('\n');
+                } else if (next == 'r') {
+                    result.append('\r');
+                } else if (next == 't') {
+                    result.append('\t');
+                } else {
+                    result.append(next);
+                }
+            } else {
+                result.append(c);
+            }
+        }
+        return result.toString();
+    }
