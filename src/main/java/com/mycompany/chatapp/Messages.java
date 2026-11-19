@@ -437,3 +437,12 @@ public class Messages {
         return report.append("================================\n").toString();
     }
 
+ // ==================== REPORTING (USED ON QUIT) ====================
+
+    public String printMessages() {
+        return sentReport();
+    }
+
+    public int returnTotalMessages() {
+        return sentMessages.size();
+    }
